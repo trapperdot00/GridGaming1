@@ -11,7 +11,7 @@ Exit the program using 'ESC' key.<br>
 
 # Mechanics
 Cursor can't go out of bounds.<br>
-Cursor will be placed to the center of the map upon initialization. (Except for when width is even and height is odd -> bug)<br>
+Cursor will be placed to the center of the map upon initialization.<br>
 Screen will refresh on cursor interaction from the player.<br>
 Screen refresh delay is 100ms.<br>
 Object placing: object gets placed on unoccupied space on canvas ('-'), object gets deleted on occupied space ('O') when attempting to place.<br>

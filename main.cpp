@@ -83,10 +83,12 @@ void printMap(const char *arr, const unsigned &playerPosIndex, const bool &playe
 
 void initMap(char *arr, unsigned &playerPosIndex, const unsigned &w, const unsigned &h)
 {
-    bool oddScale = (w % 2 && h % 2);
     for (size_t index = 0; index != w*h; ++index) {
         arr[index] = '-';
-        if ((oddScale && index == w*h/2) || (!oddScale && index == (w*h+w)/2)) {
+        if ((w % 2 == 1 && h % 2 == 1 && index == w*h/2 ) ||
+            (w % 2 == 0 && h % 2 == 0 && index == (w*h+w)/2 ) ||
+            (w % 2 == 0 && h % 2 == 1 && index == w*h - w*h/2 ) ||
+            (w % 2 == 1 && h % 2 == 0 && index == (w*h+w)/2 )) {
             playerPosIndex = index;
         }
     }
@@ -115,4 +117,3 @@ void placeObj1(char *arr, const unsigned &playerPosIndex)
 {
     arr[playerPosIndex] = arr[playerPosIndex] != 'O' ? 'O' : '-';
 }
-

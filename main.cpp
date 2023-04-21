@@ -70,7 +70,7 @@ void initMap(char *arr, unsigned &playerPosIndex, const unsigned &w, const unsig
     unsigned midH = h / 2;
     playerPosIndex = midH * w + midW;
     for (unsigned index = 0; index < w*h; ++index) {
-        arr[index] = '-';
+        arr[index] = '.';
     }
 }
 
@@ -109,7 +109,7 @@ void doAction(char *arr, unsigned &playerPosIndex, const unsigned &w, const unsi
 
 inline void placeObj1(char *arr, const unsigned &playerPosIndex)
 {
-    arr[playerPosIndex] = arr[playerPosIndex] != 'O' ? 'O' : '-';
+    arr[playerPosIndex] = arr[playerPosIndex] != '#' ? '#' : '.';
 }
 
 const char getActionFromKeyStates()

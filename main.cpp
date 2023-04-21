@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <chrono>
 #include <thread>
+#include <string>
 
 using namespace std::this_thread; // sleep_for, sleep_until
 using namespace std::chrono;
@@ -11,109 +12,128 @@ using std::endl;
 using std::end;
 using std::begin;
 using std::tolower;
+using std::string;
 
+inline void getMapSize(unsigned&, unsigned&);
 void printMap(const char*, const unsigned&, const bool&, const unsigned&, const unsigned&);
 void initMap(char*, unsigned&, const unsigned&, const unsigned&);
-void moveTo(unsigned&, const unsigned&, const unsigned&, const char&);
-void placeObj1(char *arr, const unsigned&);
+void doAction(char*, unsigned&, const unsigned&, const unsigned&, const char&, bool&);
+inline void placeObj1(char *arr, const unsigned&);
+const char getActionFromKeyStates();
 
 int main()
 {
-    unsigned width, height, playerIndex;
-    cout << "Enter width and height of map: ";
-    if (cin >> width >> height && (width > 2 || height > 2)) {
-        unsigned mapSz = width * height;
+    unsigned width, height;
+    getMapSize(width, height);
+    if (width > 2 || height > 2) {
+        const unsigned mapSz = width * height;
         char gameMap[mapSz];
-        char direction;
-        bool playerShow = true;
-
+        unsigned playerIndex;
         initMap(gameMap, playerIndex, width, height);
+        char action = 'n';
+        bool playerShow = true;
         printMap(gameMap, playerIndex, playerShow, width, height);
-
-        while (!(GetKeyState(VK_ESCAPE) & 0x8000)) {
-            if (GetKeyState('W') & 0x8000 || GetKeyState(VK_UP) & 0x8000) {
-                direction = 'u';
-                moveTo(playerIndex, width, height, direction);
+        do {
+            if (action != 'n') {
+                doAction(gameMap, playerIndex, width, height, action, playerShow);
                 printMap(gameMap, playerIndex, playerShow, width, height);
+                sleep_for(100ms);
             }
-            else if (GetKeyState('S') & 0x8000 || GetKeyState(VK_DOWN) & 0x8000) {
-                direction = 'd';
-                moveTo( playerIndex, width, height, direction);
-                printMap(gameMap, playerIndex, playerShow, width, height);
-            }
-            else if (GetKeyState('A') & 0x8000 || GetKeyState(VK_LEFT) & 0x8000) {
-                direction = 'l';
-                moveTo(playerIndex, width, height, direction);
-                printMap(gameMap, playerIndex, playerShow, width, height);
-            }
-            else if (GetKeyState('D') & 0x8000 || GetKeyState(VK_RIGHT) & 0x8000) {
-                direction = 'r';
-                moveTo(playerIndex, width, height, direction);
-                printMap(gameMap, playerIndex, playerShow, width, height);
-            }
-            else if (GetKeyState('E') & 0x8000 || GetKeyState(VK_SPACE) & 0x8000) {
-                placeObj1(gameMap, playerIndex);
-                printMap(gameMap, playerIndex, playerShow, width, height);
-            }
-            else if (GetKeyState('H') & 0x8000) {
-                playerShow = !playerShow;
-                printMap(gameMap, playerIndex, playerShow, width, height);
-            }
-            sleep_for(100ms);
-        }
+            action = getActionFromKeyStates();
+        } while (action != 'x');
     }
     return 0;
+}
+
+
+inline void getMapSize(unsigned &w, unsigned &h)
+{
+    cout << "Enter width and height of map: ";
+    cin >> w >> h;
 }
 
 void printMap(const char *arr, const unsigned &playerPosIndex, const bool &playerShow, const unsigned &w, const unsigned &h)
 {
     system("CLS");
+    string fullMap;
     for (size_t index = 0; index != w*h; ++index) {
-        if (!(index % w) && (index > 0))
-            cout << endl;
-            if (playerPosIndex != index || !playerShow) {
-                cout << arr[index] << ' ';
-            }
-            else {
-                cout << "X ";
-            }
+        fullMap += (playerShow && index == playerPosIndex) ? "X " : string() + arr[index] + ' ';
+        if (index % w == w-1)
+            fullMap += '\n';
     }
-    cout << '\n' << endl;
+    cout << fullMap << endl;
 }
 
 void initMap(char *arr, unsigned &playerPosIndex, const unsigned &w, const unsigned &h)
 {
-    for (size_t index = 0; index != w*h; ++index) {
+    unsigned midW = w / 2;
+    unsigned midH = h / 2;
+    playerPosIndex = midH * w + midW;
+    for (unsigned index = 0; index < w*h; ++index) {
         arr[index] = '-';
-        if ((w % 2 == 1 && h % 2 == 1 && index == w*h/2 ) ||
-            (w % 2 == 0 && h % 2 == 0 && index == (w*h+w)/2 ) ||
-            (w % 2 == 0 && h % 2 == 1 && index == w*h - w*h/2 ) ||
-            (w % 2 == 1 && h % 2 == 0 && index == (w*h+w)/2 )) {
-            playerPosIndex = index;
-        }
     }
 }
 
-void moveTo(unsigned &playerPosIndex, const unsigned &w, const unsigned &h, const char &direction)
+void doAction(char *arr, unsigned &playerPosIndex, const unsigned &w, const unsigned &h, const char &direction, bool &show)
 {
     switch (tolower(direction))
     {
         case 'u':   // up
-            playerPosIndex = playerPosIndex - w < w*h ? playerPosIndex - w : playerPosIndex;
+            if (playerPosIndex >= w) {
+                playerPosIndex -= w;
+            }
             break;
         case 'd':   // down
-            playerPosIndex = playerPosIndex + w < w*h ? playerPosIndex + w : playerPosIndex;
+            if (playerPosIndex < w*h-h) {
+                playerPosIndex += w;
+            }
             break;
         case 'l':   // left
-            playerPosIndex = (playerPosIndex - 1) % w < playerPosIndex % w ? playerPosIndex - 1 : playerPosIndex;
+            if (playerPosIndex % w != 0) {
+                playerPosIndex -= 1;
+            }
             break;
         case 'r':   // right
-            playerPosIndex = (playerPosIndex + 1) % w > playerPosIndex % w ? playerPosIndex + 1 : playerPosIndex;
+            if (playerPosIndex % w != w-1) {
+                playerPosIndex += 1;
+            }
+            break;
+        case 'p':   // place object1
+            placeObj1(arr, playerPosIndex);
+            break;
+        case 'h':   // toggle player hide/show
+            show = !show;
             break;
     }
 }
 
-void placeObj1(char *arr, const unsigned &playerPosIndex)
+inline void placeObj1(char *arr, const unsigned &playerPosIndex)
 {
     arr[playerPosIndex] = arr[playerPosIndex] != 'O' ? 'O' : '-';
+}
+
+const char getActionFromKeyStates()
+{
+    if (GetKeyState('W') & 0x8000 || GetKeyState(VK_UP) & 0x8000) {
+        return 'u'; // up
+    }
+    else if (GetKeyState('S') & 0x8000 || GetKeyState(VK_DOWN) & 0x8000) {
+        return 'd'; // down
+    }
+    else if (GetKeyState('A') & 0x8000 || GetKeyState(VK_LEFT) & 0x8000) {
+        return 'l'; // left
+    }
+    else if (GetKeyState('D') & 0x8000 || GetKeyState(VK_RIGHT) & 0x8000) {
+        return 'r'; // right
+    }
+    else if (GetKeyState('E') & 0x8000 || GetKeyState(VK_SPACE) & 0x8000) {
+        return 'p'; // place object1
+    }
+    else if (GetKeyState('H') & 0x8000) {
+        return 'h'; // toggle player hide/show
+    }
+    else if (GetKeyState(VK_ESCAPE) & 0x8000) {
+        return 'x'; // exit
+    }
+    return 'n'; // none
 }
